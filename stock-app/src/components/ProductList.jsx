@@ -12,54 +12,40 @@ const ProductList = ({ products, onRemove, onUpdate }) => {
   }
 
   const handleSave = () => {
-    onUpdate(editingId, editedName, parseInt(editedQty))
+    if (!editedName.trim() || !editedQty || isNaN(editedQty)) {
+      alert('Lütfen geçerli isim ve adet girin.')
+      return
+    }
+    onUpdate(editingId, editedName.trim(), parseInt(editedQty))
     setEditingId(null)
   }
 
   return (
-    <ul style={{ padding: 0 }}>
+    <ul>
       {products.map((product) => (
-        <li
-          key={product.id}
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '10px',
-            marginTop: '10px',
-            background: '#fafafa',
-            padding: '10px',
-            borderRadius: '6px'
-          }}
-        >
+        <li key={product.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           {editingId === product.id ? (
             <div style={{ width: '100%', display: 'flex', gap: '10px', alignItems: 'center' }}>
               <input
                 value={editedName}
                 onChange={(e) => setEditedName(e.target.value)}
                 placeholder="Yeni isim"
-                style={{ flex: 2, padding: '6px', borderRadius: '6px', border: '1px solid #ccc' }}
               />
               <input
                 type="number"
                 value={editedQty}
                 onChange={(e) => setEditedQty(e.target.value)}
                 placeholder="Yeni adet"
-                style={{ flex: 1, padding: '6px', borderRadius: '6px', border: '1px solid #ccc' }}
+                min="0"
               />
-              <button onClick={handleSave} style={{ padding: '6px 12px' }}>Kaydet</button>
-              <button onClick={() => setEditingId(null)} style={{ padding: '6px 12px' }}>İptal</button>
+              <button onClick={handleSave}>Kaydet</button>
+              <button onClick={() => setEditingId(null)}>İptal</button>
             </div>
           ) : (
             <>
-              <div style={{ flex: 2, padding: '8px', border: '1px solid #ddd', borderRadius: '6px' }}>
-                {product.name}
-              </div>
-              <div style={{ flex: 1, padding: '8px', border: '1px solid #ddd', borderRadius: '6px', textAlign: 'center' }}>
-                {product.quantity} adet
-              </div>
+              <span style={{ flexGrow: 1 }}>{product.name} - {product.quantity} adet</span>
               <div>
-                <button onClick={() => handleEditClick(product)} style={{ marginRight: '6px' }}>Düzenle</button>
+                <button onClick={() => handleEditClick(product)}>Düzenle</button>
                 <button onClick={() => onRemove(product.id)}>Sil</button>
               </div>
             </>

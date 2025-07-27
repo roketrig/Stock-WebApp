@@ -4,7 +4,6 @@ import ProductForm from '../components/ProductForm'
 import ProductList from '../components/ProductList'
 import './Home.css'
 
-// Firestore importları
 import {
   collection,
   addDoc,
@@ -19,7 +18,7 @@ const Home = () => {
   const { user, logout } = useAuth()
   const [products, setProducts] = useState([])
 
-  // Tüm ürünleri dinle (real-time)
+  // Firestore'dan ürünleri gerçek zamanlı çek
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'products'), (snapshot) => {
       const data = snapshot.docs.map((doc) => ({
@@ -32,7 +31,7 @@ const Home = () => {
     return () => unsubscribe()
   }, [])
 
-  // Yeni ürün ekleme
+  // Yeni ürün ekle
   const addProduct = async (product) => {
     try {
       await addDoc(collection(db, 'products'), product)
@@ -41,7 +40,7 @@ const Home = () => {
     }
   }
 
-  // Ürün silme
+  // Ürün sil
   const removeProduct = async (id) => {
     try {
       await deleteDoc(doc(db, 'products', id))
@@ -50,7 +49,7 @@ const Home = () => {
     }
   }
 
-  // Ürün güncelleme
+  // Ürün güncelle
   const updateProduct = async (id, newName, newQty) => {
     try {
       const productRef = doc(db, 'products', id)
