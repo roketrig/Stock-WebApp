@@ -8,7 +8,7 @@ import ProductForm from '../components/ProductForm'
 import ProductList from '../components/ProductList'
 import './Home.css'
 
-// Basit tarih formatlayıcı
+// Tarih formatlayıcı
 const formatDate = (date) => {
   if (!date) return ''
   return date.toLocaleString('tr-TR', { hour12: false })
@@ -19,7 +19,6 @@ const Home = () => {
   const [products, setProducts] = useState([])
 
   useEffect(() => {
-    // Ürünleri isme göre sırala ve anlık dinle
     const q = query(collection(db, 'products'), orderBy('name'))
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({
@@ -33,7 +32,6 @@ const Home = () => {
     return () => unsubscribe()
   }, [])
 
-  // Ürün ekle
   const addProduct = async (product) => {
     try {
       await addDoc(collection(db, 'products'), {
@@ -46,7 +44,6 @@ const Home = () => {
     }
   }
 
-  // Ürün sil
   const removeProduct = async (id) => {
     try {
       await deleteDoc(doc(db, 'products', id))
@@ -55,7 +52,6 @@ const Home = () => {
     }
   }
 
-  // Ürün güncelle
   const updateProduct = async (id, newName, newQty) => {
     try {
       const productRef = doc(db, 'products', id)
@@ -69,7 +65,10 @@ const Home = () => {
     }
   }
 
-  // En son güncellenen tarihi bul
+  // Toplam adet hesapla
+  const totalQuantity = products.reduce((total, p) => total + (p.quantity || 0), 0)
+
+  // Son güncellenen tarih
   const lastUpdated = products.reduce((latest, product) => {
     if (!product.updatedAt) return latest
     return !latest || product.updatedAt > latest ? product.updatedAt : latest
@@ -83,8 +82,12 @@ const Home = () => {
 
         <h2>📦 Stok Takip</h2>
 
+        <p style={{ fontWeight: 'bold', fontSize: '1rem', marginBottom: '0.3rem' }}>
+          Toplam ürün adeti: {totalQuantity}
+        </p>
+
         {lastUpdated && (
-          <p style={{ fontSize: '0.85rem', color: '#555' }}>
+          <p style={{ fontSize: '0.85rem', color: '#555', marginTop: 0 }}>
             Son değişiklik: {formatDate(lastUpdated)}
           </p>
         )}
