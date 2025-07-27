@@ -1,62 +1,64 @@
-import { useEffect, useState } from 'react'
-import { collection, query, onSnapshot, updateDoc, doc, deleteDoc } from 'firebase/firestore'
+import { useAuth } from '../context/AuthContext'
+import { useState, useEffect } from 'react'
+import { 
+  collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc 
+} from 'firebase/firestore'
 import { db } from '../firebase'
 import ProductForm from '../components/ProductForm'
 import ProductList from '../components/ProductList'
-import { useAuth } from '../context/AuthContext'
 import './Home.css'
 
 const Home = () => {
   const { user, logout } = useAuth()
   const [products, setProducts] = useState([])
-  const [lastUpdate, setLastUpdate] = useState(null)
-  const [showTodayChanges, setShowTodayChanges] = useState(false)
 
   useEffect(() => {
-    const q = query(collection(db, 'products'))
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const prods = []
-      let latest = null
-      querySnapshot.forEach((doc) => {
-        const data = doc.data()
-        prods.push({ id: doc.id, ...data })
-
-        // En son güncelleme zamanını bul
-        if (!latest || (data.updatedAt && data.updatedAt.toDate() > latest.toDate())) {
-          latest = data.updatedAt
-        }
-      })
-      setProducts(prods)
-      setLastUpdate(latest)
+    // Firestore sorgusu: ürünleri isme göre A-Z sırala
+    const q = query(collection(db, 'products'), orderBy('name'))
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+      setProducts(data)
     })
+
     return () => unsubscribe()
   }, [])
 
+  // Ürün ekle
   const addProduct = async (product) => {
-    // ... ürün ekleme kodunuz buraya ...
-  }
-
-  const removeProduct = async (id) => {
-    // ... ürün silme kodunuz buraya ...
-  }
-
-  const updateProduct = async (id, newName, newQty) => {
-    // ... ürün güncelleme kodunuz buraya ...
-  }
-
-  // Bugün güncellenmiş ürünleri filtrele
-  const filteredProducts = showTodayChanges
-    ? products.filter(product => {
-        if (!product.updatedAt) return false
-        const updatedDate = product.updatedAt.toDate()
-        const today = new Date()
-        return (
-          updatedDate.getDate() === today.getDate() &&
-          updatedDate.getMonth() === today.getMonth() &&
-          updatedDate.getFullYear() === today.getFullYear()
-        )
+    try {
+      await addDoc(collection(db, 'products'), {
+        name: product.name,
+        quantity: product.quantity
       })
-    : products
+    } catch (error) {
+      console.error('Ürün eklenemedi:', error)
+    }
+  }
+
+  // Ürün sil
+  const removeProduct = async (id) => {
+    try {
+      await deleteDoc(doc(db, 'products', id))
+    } catch (error) {
+      console.error('Ürün silinemedi:', error)
+    }
+  }
+
+  // Ürün güncelle
+  const updateProduct = async (id, newName, newQty) => {
+    try {
+      const productRef = doc(db, 'products', id)
+      await updateDoc(productRef, {
+        name: newName,
+        quantity: newQty
+      })
+    } catch (error) {
+      console.error('Ürün güncellenemedi:', error)
+    }
+  }
 
   return (
     <div className="home-wrapper">
@@ -65,20 +67,11 @@ const Home = () => {
         <button className="logout-btn" onClick={logout}>Çıkış Yap</button>
 
         <h2>📦 Stok Takip</h2>
-
-        <button
-          style={{ marginBottom: '1rem' }}
-          onClick={() => setShowTodayChanges(!showTodayChanges)}
-        >
-          {showTodayChanges ? 'Tüm Ürünler' : 'Bugün Güncellenenler'}
-        </button>
-
         <ProductForm onAdd={addProduct} />
-        <ProductList
-          products={filteredProducts}
-          onRemove={removeProduct}
-          onUpdate={updateProduct}
-          lastUpdate={lastUpdate}
+        <ProductList 
+          products={products} 
+          onRemove={removeProduct} 
+          onUpdate={updateProduct} 
         />
       </div>
     </div>
