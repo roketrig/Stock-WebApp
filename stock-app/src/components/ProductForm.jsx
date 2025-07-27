@@ -6,9 +6,8 @@ const ProductForm = ({ onAdd }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!name.trim() || !quantity) return
-
-    onAdd({ name: name.trim(), quantity: quantity })
+    if (!name || !quantity) return
+    onAdd({ name, quantity: parseFloat(quantity) })
     setName('')
     setQuantity('')
   }
@@ -20,7 +19,7 @@ const ProductForm = ({ onAdd }) => {
         placeholder="Ürün adı"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        required
+        style={{padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc', width: '60%', marginRight: '10px'}}
       />
       <input
         type="number"
@@ -28,10 +27,11 @@ const ProductForm = ({ onAdd }) => {
         placeholder="Adet"
         value={quantity}
         onChange={(e) => setQuantity(e.target.value)}
-        required
-        min="0.1"
+        style={{padding: '0.5rem', borderRadius: '6px', border: '1px solid #ccc', width: '30%', marginRight: '10px'}}
       />
-      <button type="submit">Ekle</button>
+      <button type="submit" style={{padding: '0.5rem 1rem', backgroundColor: '#0077cc', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer'}}>
+        Ekle
+      </button>
     </form>
   )
 }
