@@ -18,7 +18,6 @@ const Home = () => {
   const { user, logout } = useAuth()
   const [products, setProducts] = useState([])
 
-  // Firestore'dan ürünleri gerçek zamanlı çek
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'products'), (snapshot) => {
       const data = snapshot.docs.map((doc) => ({
@@ -31,16 +30,17 @@ const Home = () => {
     return () => unsubscribe()
   }, [])
 
-  // Yeni ürün ekle
   const addProduct = async (product) => {
     try {
-      await addDoc(collection(db, 'products'), product)
+      await addDoc(collection(db, 'products'), {
+        name: String(product.name),
+        quantity: Number(product.quantity) || 0,
+      })
     } catch (error) {
       console.error('Ürün eklenemedi:', error)
     }
   }
 
-  // Ürün sil
   const removeProduct = async (id) => {
     try {
       await deleteDoc(doc(db, 'products', id))
@@ -49,14 +49,15 @@ const Home = () => {
     }
   }
 
-  // Ürün güncelle
   const updateProduct = async (id, newName, newQty) => {
+    console.log('updateProduct çağrıldı:', { id, newName, newQty, nameType: typeof newName, qtyType: typeof newQty })
     try {
       const productRef = doc(db, 'products', id)
       await updateDoc(productRef, {
-        name: newName,
-        quantity: newQty,
+        name: String(newName),
+        quantity: Number(newQty) || 0,
       })
+      console.log('Güncelleme başarılı')
     } catch (error) {
       console.error('Ürün güncellenemedi:', error)
     }

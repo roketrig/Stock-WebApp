@@ -16,7 +16,7 @@ const ProductList = ({ products, onRemove, onUpdate }) => {
       alert('Lütfen geçerli isim ve adet girin.')
       return
     }
-    onUpdate(editingId, editedName.trim(), parseInt(editedQty))
+    onUpdate(editingId, editedName.trim(), Number(editedQty))
     setEditingId(null)
   }
 
