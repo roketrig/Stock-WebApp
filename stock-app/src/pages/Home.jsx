@@ -20,10 +20,7 @@ const Home = () => {
   const [products, setProducts] = useState([])
 
   useEffect(() => {
-    // products koleksiyonunu name'e göre sırala ve dinle
     const q = query(collection(db, 'products'), orderBy('name'))
-
-    // Gerçek zamanlı güncellemeleri dinle
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const items = []
       querySnapshot.forEach((doc) => {
@@ -35,7 +32,6 @@ const Home = () => {
     return () => unsubscribe()
   }, [])
 
-  // Yeni ürün ekleme
   const addProduct = async (product) => {
     try {
       await addDoc(collection(db, 'products'), product)
@@ -44,7 +40,6 @@ const Home = () => {
     }
   }
 
-  // Ürün silme
   const removeProduct = async (id) => {
     try {
       await deleteDoc(doc(db, 'products', id))
@@ -53,7 +48,6 @@ const Home = () => {
     }
   }
 
-  // Ürün güncelleme
   const updateProduct = async (id, newName, newQty) => {
     try {
       const productRef = doc(db, 'products', id)
