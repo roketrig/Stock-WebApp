@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-const ProductList = ({ products, onRemove, onUpdate }) => {
+const ProductList = ({ products, onRemove, onUpdate, lastUpdate }) => {
   const [editingId, setEditingId] = useState(null)
   const [editedName, setEditedName] = useState('')
   const [editedQty, setEditedQty] = useState('')
@@ -14,6 +14,12 @@ const ProductList = ({ products, onRemove, onUpdate }) => {
   const handleSave = () => {
     onUpdate(editingId, editedName, parseInt(editedQty))
     setEditingId(null)
+  }
+
+  // En son güncellenen ürün mü kontrolü
+  const isLatest = (product) => {
+    if (!product.updatedAt || !lastUpdate) return false
+    return product.updatedAt.seconds === lastUpdate.seconds && product.updatedAt.nanoseconds === lastUpdate.nanoseconds
   }
 
   return (
@@ -49,25 +55,13 @@ const ProductList = ({ products, onRemove, onUpdate }) => {
             </>
           ) : (
             <>
-              <div style={{
-                flex: 2,
-                backgroundColor: '#e0f7fa',
-                padding: '8px',
-                borderRadius: '6px',
-                fontWeight: '600'
-              }}>
+              <span style={{ fontWeight: '600' }}>
                 {product.name}
-              </div>
-              <div style={{
-                width: '60px',
-                backgroundColor: '#ffe0b2',
-                padding: '8px',
-                borderRadius: '6px',
-                textAlign: 'center',
-                fontWeight: '600'
-              }}>
-                {product.quantity} adet
-              </div>
+                {isLatest(product) && (
+                  <span title="Son değişiklik" style={{ color: 'green', marginLeft: '6px' }}>🔄</span>
+                )}
+              </span>
+              <span>{product.quantity} adet</span>
               <div>
                 <button onClick={() => handleEditClick(product)}>Düzenle</button>
                 <button onClick={() => onRemove(product.id)}>Sil</button>
