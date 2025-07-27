@@ -1,29 +1,24 @@
 import { useAuth } from '../context/AuthContext'
 import { useState, useEffect } from 'react'
+import { 
+  collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc 
+} from 'firebase/firestore'
+import { db } from '../firebase'
 import ProductForm from '../components/ProductForm'
 import ProductList from '../components/ProductList'
 import './Home.css'
-
-import {
-  collection,
-  addDoc,
-  onSnapshot,
-  deleteDoc,
-  doc,
-  updateDoc,
-} from 'firebase/firestore'
-import { db } from '../firebase'
 
 const Home = () => {
   const { user, logout } = useAuth()
   const [products, setProducts] = useState([])
 
-  // Firestore'dan gerçek zamanlı ürünleri çek
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'products'), (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,  // burada id string olarak geliyor
-        ...doc.data(),
+    // Firestore sorgusu: ürünleri isme göre A-Z sırala
+    const q = query(collection(db, 'products'), orderBy('name'))
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
       }))
       setProducts(data)
     })
@@ -31,36 +26,35 @@ const Home = () => {
     return () => unsubscribe()
   }, [])
 
-  // Yeni ürün ekle
+  // Ürün ekle
   const addProduct = async (product) => {
     try {
       await addDoc(collection(db, 'products'), {
-        name: String(product.name),
-        quantity: Number(product.quantity) || 0,
+        name: product.name,
+        quantity: product.quantity
       })
     } catch (error) {
       console.error('Ürün eklenemedi:', error)
     }
   }
 
-  // Ürün sil (id string olarak gönderiliyor)
+  // Ürün sil
   const removeProduct = async (id) => {
     try {
-      await deleteDoc(doc(db, 'products', String(id)))
+      await deleteDoc(doc(db, 'products', id))
     } catch (error) {
       console.error('Ürün silinemedi:', error)
     }
   }
 
-  // Ürün güncelle (id string olarak gönderiliyor)
+  // Ürün güncelle
   const updateProduct = async (id, newName, newQty) => {
     try {
-      const productRef = doc(db, 'products', String(id))
+      const productRef = doc(db, 'products', id)
       await updateDoc(productRef, {
-        name: String(newName),
-        quantity: Number(newQty) || 0,
+        name: newName,
+        quantity: newQty
       })
-      console.log('Ürün güncellendi')
     } catch (error) {
       console.error('Ürün güncellenemedi:', error)
     }
@@ -74,10 +68,10 @@ const Home = () => {
 
         <h2>📦 Stok Takip</h2>
         <ProductForm onAdd={addProduct} />
-        <ProductList
-          products={products}
-          onRemove={removeProduct}
-          onUpdate={updateProduct}
+        <ProductList 
+          products={products} 
+          onRemove={removeProduct} 
+          onUpdate={updateProduct} 
         />
       </div>
     </div>
