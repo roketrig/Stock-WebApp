@@ -12,45 +12,65 @@ const ProductList = ({ products, onRemove, onUpdate }) => {
   }
 
   const handleSave = () => {
-    if (!editedName.trim() || editedQty === '' || isNaN(editedQty)) {
-      alert('Lütfen geçerli isim ve adet girin.')
-      return
-    }
-    onUpdate(editingId, editedName.trim(), Number(editedQty))
+    onUpdate(editingId, editedName, parseInt(editedQty))
     setEditingId(null)
   }
 
   return (
-    <ul>
+    <ul style={{ padding: 0, listStyle: 'none' }}>
       {products.map((product) => (
-        <li
-          key={product.id}
-          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-        >
+        <li key={product.id} style={{
+          marginTop: '10px',
+          background: '#fafafa',
+          padding: '10px',
+          borderRadius: '6px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
           {editingId === product.id ? (
-            <div style={{ width: '100%', display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div style={{ width: '100%', display: 'flex', gap: '10px' }}>
               <input
                 value={editedName}
                 onChange={(e) => setEditedName(e.target.value)}
                 placeholder="Yeni isim"
+                style={{ flex: 2, padding: '5px' }}
               />
               <input
                 type="number"
                 value={editedQty}
                 onChange={(e) => setEditedQty(e.target.value)}
                 placeholder="Yeni adet"
-                min="0"
+                style={{ flex: 1, padding: '5px' }}
               />
-              <button onClick={handleSave}>Kaydet</button>
-              <button onClick={() => setEditingId(null)}>İptal</button>
+              <button onClick={handleSave} style={{ padding: '5px 10px' }}>Kaydet</button>
+              <button onClick={() => setEditingId(null)} style={{ padding: '5px 10px' }}>İptal</button>
             </div>
           ) : (
             <>
-              <span style={{ flexGrow: 1 }}>
-                {product.name} - {product.quantity} adet
-              </span>
+              <div style={{
+                flex: 2,
+                backgroundColor: '#0077cc',
+                color: 'white',
+                padding: '5px 10px',
+                borderRadius: '4px',
+                marginRight: '10px',
+                textAlign: 'center'
+              }}>
+                {product.name}
+              </div>
+              <div style={{
+                flex: 1,
+                backgroundColor: '#ff7f50',
+                color: 'white',
+                padding: '5px 10px',
+                borderRadius: '4px',
+                textAlign: 'center'
+              }}>
+                {product.quantity} adet
+              </div>
               <div>
-                <button onClick={() => handleEditClick(product)}>Düzenle</button>
+                <button onClick={() => handleEditClick(product)} style={{ marginRight: '5px' }}>Düzenle</button>
                 <button onClick={() => onRemove(product.id)}>Sil</button>
               </div>
             </>
