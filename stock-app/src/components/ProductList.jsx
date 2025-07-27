@@ -12,7 +12,7 @@ const ProductList = ({ products, onRemove, onUpdate }) => {
   }
 
   const handleSave = () => {
-    if (!editedName.trim() || !editedQty || isNaN(editedQty)) {
+    if (!editedName.trim() || editedQty === '' || isNaN(editedQty)) {
       alert('Lütfen geçerli isim ve adet girin.')
       return
     }
@@ -23,7 +23,10 @@ const ProductList = ({ products, onRemove, onUpdate }) => {
   return (
     <ul>
       {products.map((product) => (
-        <li key={product.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <li
+          key={product.id}
+          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
           {editingId === product.id ? (
             <div style={{ width: '100%', display: 'flex', gap: '10px', alignItems: 'center' }}>
               <input
@@ -43,7 +46,9 @@ const ProductList = ({ products, onRemove, onUpdate }) => {
             </div>
           ) : (
             <>
-              <span style={{ flexGrow: 1 }}>{product.name} - {product.quantity} adet</span>
+              <span style={{ flexGrow: 1 }}>
+                {product.name} - {product.quantity} adet
+              </span>
               <div>
                 <button onClick={() => handleEditClick(product)}>Düzenle</button>
                 <button onClick={() => onRemove(product.id)}>Sil</button>
