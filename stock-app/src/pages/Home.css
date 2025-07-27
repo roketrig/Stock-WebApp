@@ -1,0 +1,63 @@
+.home-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f4f4f4;
+  padding: 1rem;
+}
+
+.home-box {
+  background: black;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 500px;
+  text-align: center;
+  color: #222; /* Text rengini koyu gri yaptık */
+}
+
+.logout-btn {
+  margin-bottom: 1.5rem;
+  padding: 0.5rem 1.2rem;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.home-box input {
+  width: 100%;
+  padding: 0.5rem;
+  margin: 0.3rem 0;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.home-box button[type="submit"] {
+  margin-top: 0.5rem;
+  width: 100%;
+  padding: 0.5rem;
+  background-color: #0077cc;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  margin-top: 10px;
+  background: #fafafa;
+  padding: 10px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
