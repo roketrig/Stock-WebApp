@@ -8,12 +8,6 @@ import ProductForm from '../components/ProductForm'
 import ProductList from '../components/ProductList'
 import './Home.css'
 
-// Tarih formatlayıcı
-const formatDate = (date) => {
-  if (!date) return ''
-  return date.toLocaleString('tr-TR', { hour12: false })
-}
-
 const Home = () => {
   const { user, logout } = useAuth()
   const [products, setProducts] = useState([])
@@ -23,8 +17,7 @@ const Home = () => {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data(),
-        updatedAt: doc.data().updatedAt ? doc.data().updatedAt.toDate() : null
+        ...doc.data()
       }))
       setProducts(data)
     })
@@ -32,11 +25,18 @@ const Home = () => {
     return () => unsubscribe()
   }, [])
 
+  // Adet normalizasyon fonksiyonu
+  const normalizeQuantity = (qty) => {
+    const n = parseFloat(qty)
+    if (isNaN(n) || n <= 0) return 1
+    return n < 1 ? 1 : n
+  }
+
   const addProduct = async (product) => {
     try {
       await addDoc(collection(db, 'products'), {
         name: product.name,
-        quantity: product.quantity,
+        quantity: normalizeQuantity(product.quantity),
         updatedAt: serverTimestamp()
       })
     } catch (error) {
@@ -57,7 +57,7 @@ const Home = () => {
       const productRef = doc(db, 'products', id)
       await updateDoc(productRef, {
         name: newName,
-        quantity: newQty,
+        quantity: normalizeQuantity(newQty),
         updatedAt: serverTimestamp()
       })
     } catch (error) {
@@ -66,12 +66,13 @@ const Home = () => {
   }
 
   // Toplam adet hesapla
-  const totalQuantity = products.reduce((total, p) => total + (p.quantity || 0), 0)
+  const totalQuantity = products.reduce((acc, p) => acc + (parseFloat(p.quantity) || 0), 0)
 
-  // Son güncellenen tarih
-  const lastUpdated = products.reduce((latest, product) => {
-    if (!product.updatedAt) return latest
-    return !latest || product.updatedAt > latest ? product.updatedAt : latest
+  // Son güncelleme tarihi (en büyük updatedAt)
+  const lastUpdated = products.reduce((latest, p) => {
+    if (!p.updatedAt) return latest
+    const date = p.updatedAt.toDate ? p.updatedAt.toDate() : new Date(p.updatedAt)
+    return (!latest || date > latest) ? date : latest
   }, null)
 
   return (
@@ -80,18 +81,16 @@ const Home = () => {
         <h1>Hoş geldin, {user.username}</h1>
         <button className="logout-btn" onClick={logout}>Çıkış Yap</button>
 
-        <h2>📦 Stok Takip</h2>
-
-        <p style={{ fontWeight: 'bold', fontSize: '1rem', marginBottom: '0.3rem' }}>
-          Toplam ürün adeti: {totalQuantity}
-        </p>
-
+        <h3 style={{ marginBottom: '10px' }}>
+          Toplam Stok Adedi: <strong>{Math.round(totalQuantity)}</strong>
+        </h3>
         {lastUpdated && (
-          <p style={{ fontSize: '0.85rem', color: '#555', marginTop: 0 }}>
-            Son değişiklik: {formatDate(lastUpdated)}
-          </p>
+          <h4 style={{ marginTop: 0, marginBottom: '1.5rem', fontWeight: 'normal', color: '#666' }}>
+            Son Güncelleme: {lastUpdated.toLocaleString()}
+          </h4>
         )}
 
+        <h2>📦 Stok Takip</h2>
         <ProductForm onAdd={addProduct} />
         <ProductList 
           products={products} 
