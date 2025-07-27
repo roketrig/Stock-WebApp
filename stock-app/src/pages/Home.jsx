@@ -1,7 +1,7 @@
 import { useAuth } from '../context/AuthContext'
 import { useState, useEffect } from 'react'
 import { 
-  collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc 
+  collection, query, onSnapshot, addDoc, updateDoc, deleteDoc, doc 
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import ProductForm from '../components/ProductForm'
@@ -12,25 +12,36 @@ const Home = () => {
   const { user, logout } = useAuth()
   const [products, setProducts] = useState([])
   const [lastUpdated, setLastUpdated] = useState(null)
+  const [lastUpdatedBy, setLastUpdatedBy] = useState(null)
 
   useEffect(() => {
-    const q = query(collection(db, 'products'), orderBy('name'))
+    const q = query(collection(db, 'products')) // orderBy('name') kaldırıldı
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }))
+
+      // Türkçe karakter duyarlı sıralama (A-Z)
+      data.sort((a, b) => a.name.localeCompare(b.name, 'tr'))
+
       setProducts(data)
 
-      // Son değişiklik tarihini bul (en büyük updatedAt)
-      const updatedTimes = data
-        .map(p => p.updatedAt?.toDate?.() || null)
-        .filter(Boolean)
-      if (updatedTimes.length > 0) {
-        const maxDate = new Date(Math.max(...updatedTimes.map(d => d.getTime())))
-        setLastUpdated(maxDate)
+      // En son güncelleme yapan kullanıcı ve zaman
+      const updatedEntries = data
+        .map(p => ({
+          time: p.updatedAt?.toDate?.() || null,
+          user: p.updatedBy || 'Bilinmiyor'
+        }))
+        .filter(entry => entry.time)
+
+      if (updatedEntries.length > 0) {
+        const latest = updatedEntries.reduce((a, b) => a.time > b.time ? a : b)
+        setLastUpdated(latest.time)
+        setLastUpdatedBy(latest.user)
       } else {
         setLastUpdated(null)
+        setLastUpdatedBy(null)
       }
     })
 
@@ -42,7 +53,8 @@ const Home = () => {
       await addDoc(collection(db, 'products'), {
         name: product.name,
         quantity: parseFloat(product.quantity),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        updatedBy: user.username // Güncelleyen kullanıcı
       })
     } catch (error) {
       console.error('Ürün eklenemedi:', error)
@@ -63,7 +75,8 @@ const Home = () => {
       await updateDoc(productRef, {
         name: newName,
         quantity: parseFloat(newQty),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        updatedBy: user.username // Güncelleyen kullanıcı
       })
     } catch (error) {
       console.error('Ürün güncellenemedi:', error)
@@ -84,7 +97,10 @@ const Home = () => {
 
         <h3>Toplam Stok Adeti: {totalQuantity}</h3>
         {lastUpdated && (
-          <p>Son Güncelleme: {lastUpdated.toLocaleString()}</p>
+          <p>
+            Son Güncelleme: {lastUpdated.toLocaleString()}<br />
+            Güncelleyen: {lastUpdatedBy}
+          </p>
         )}
 
         <h2>📦 Stok Takip</h2>

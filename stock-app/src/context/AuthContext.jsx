@@ -10,6 +10,22 @@ export const AuthProvider = ({ children }) => {
       setUser({ username })
       return true
     }
+        if (username === 'tugkan' && password === '1234') {
+      setUser({ username })
+      return true
+    }
+        if (username === 'serkan' && password === '1234') {
+      setUser({ username })
+      return true
+    }
+        if (username === 'ata' && password === '1234') {
+      setUser({ username })
+      return true
+    }
+        if (username === 'leyla' && password === '1234') {
+      setUser({ username })
+      return true
+    }
     return false
   }
 
