@@ -1,59 +1,65 @@
-import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useState, useEffect } from 'react'
 import ProductForm from '../components/ProductForm'
 import ProductList from '../components/ProductList'
-import { db } from '../firebase'
+import './Home.css'
+
+// Firestore importları
 import {
   collection,
   addDoc,
-  doc,
-  deleteDoc,
-  updateDoc,
   onSnapshot,
-  query,
-  orderBy
+  deleteDoc,
+  doc,
+  updateDoc,
 } from 'firebase/firestore'
-import './Home.css'
+import { db } from '../firebase'
 
 const Home = () => {
   const { user, logout } = useAuth()
   const [products, setProducts] = useState([])
 
+  // Tüm ürünleri dinle (real-time)
   useEffect(() => {
-    const q = query(collection(db, 'products'), orderBy('name'))
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const items = []
-      querySnapshot.forEach((doc) => {
-        items.push({ id: doc.id, ...doc.data() })
-      })
-      setProducts(items)
+    const unsubscribe = onSnapshot(collection(db, 'products'), (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }))
+      setProducts(data)
     })
 
     return () => unsubscribe()
   }, [])
 
+  // Yeni ürün ekleme
   const addProduct = async (product) => {
     try {
       await addDoc(collection(db, 'products'), product)
     } catch (error) {
-      console.error('Ürün eklenirken hata:', error)
+      console.error('Ürün eklenemedi:', error)
     }
   }
 
+  // Ürün silme
   const removeProduct = async (id) => {
     try {
       await deleteDoc(doc(db, 'products', id))
     } catch (error) {
-      console.error('Ürün silinirken hata:', error)
+      console.error('Ürün silinemedi:', error)
     }
   }
 
+  // Ürün güncelleme
   const updateProduct = async (id, newName, newQty) => {
     try {
       const productRef = doc(db, 'products', id)
-      await updateDoc(productRef, { name: newName, quantity: newQty })
+      await updateDoc(productRef, {
+        name: newName,
+        quantity: newQty,
+      })
     } catch (error) {
-      console.error('Ürün güncellenirken hata:', error)
+      console.error('Ürün güncellenemedi:', error)
     }
   }
 
