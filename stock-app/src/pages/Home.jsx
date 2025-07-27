@@ -8,19 +8,11 @@ import ProductForm from '../components/ProductForm'
 import ProductList from '../components/ProductList'
 import './Home.css'
 
-const normalizeQuantity = (qty) => {
-  const n = parseFloat(qty)
-  if (isNaN(n) || n <= 0) return 1
-  return n < 1 ? 1 : n
-}
-
 const Home = () => {
   const { user, logout } = useAuth()
   const [products, setProducts] = useState([])
-  const [lastUpdate, setLastUpdate] = useState(null)
 
   useEffect(() => {
-    // Ürünleri isme göre A-Z sırala
     const q = query(collection(db, 'products'), orderBy('name'))
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({
@@ -28,23 +20,18 @@ const Home = () => {
         ...doc.data()
       }))
       setProducts(data)
-
-      // Son güncelleme tarihini al (en güncel updatedAt)
-      const updatedAts = data
-        .map(p => p.updatedAt?.toDate?.())
-        .filter(date => date instanceof Date)
-      if (updatedAts.length > 0) {
-        const latest = new Date(Math.max(...updatedAts.map(d => d.getTime())))
-        setLastUpdate(latest)
-      } else {
-        setLastUpdate(null)
-      }
     })
 
     return () => unsubscribe()
   }, [])
 
-  // Ürün ekle
+  // Adet normalizasyon fonksiyonu
+  const normalizeQuantity = (qty) => {
+    const n = parseFloat(qty)
+    if (isNaN(n) || n <= 0) return 1
+    return n < 1 ? 1 : n
+  }
+
   const addProduct = async (product) => {
     try {
       await addDoc(collection(db, 'products'), {
@@ -57,7 +44,6 @@ const Home = () => {
     }
   }
 
-  // Ürün sil
   const removeProduct = async (id) => {
     try {
       await deleteDoc(doc(db, 'products', id))
@@ -66,7 +52,6 @@ const Home = () => {
     }
   }
 
-  // Ürün güncelle
   const updateProduct = async (id, newName, newQty) => {
     try {
       const productRef = doc(db, 'products', id)
@@ -80,12 +65,15 @@ const Home = () => {
     }
   }
 
-  // Toplam adet hesapla (küçük sayıları 1 sayar)
-  const totalQuantity = products.reduce((sum, p) => {
-    const qty = parseFloat(p.quantity)
-    if (isNaN(qty) || qty <= 0) return sum + 1
-    return sum + (qty < 1 ? 1 : qty)
-  }, 0)
+  // Toplam adet hesapla
+  const totalQuantity = products.reduce((acc, p) => acc + (parseFloat(p.quantity) || 0), 0)
+
+  // Son güncelleme tarihi (en büyük updatedAt)
+  const lastUpdated = products.reduce((latest, p) => {
+    if (!p.updatedAt) return latest
+    const date = p.updatedAt.toDate ? p.updatedAt.toDate() : new Date(p.updatedAt)
+    return (!latest || date > latest) ? date : latest
+  }, null)
 
   return (
     <div className="home-wrapper">
@@ -93,12 +81,14 @@ const Home = () => {
         <h1>Hoş geldin, {user.username}</h1>
         <button className="logout-btn" onClick={logout}>Çıkış Yap</button>
 
-        <div style={{ marginBottom: '1rem', fontWeight: 'bold' }}>
-          Toplam Stok Adedi: {totalQuantity} <br />
-          {lastUpdate && (
-            <>Son Güncelleme: {lastUpdate.toLocaleDateString()} {lastUpdate.toLocaleTimeString()}</>
-          )}
-        </div>
+        <h3 style={{ marginBottom: '10px' }}>
+          Toplam Stok Adedi: <strong>{Math.round(totalQuantity)}</strong>
+        </h3>
+        {lastUpdated && (
+          <h4 style={{ marginTop: 0, marginBottom: '1.5rem', fontWeight: 'normal', color: '#666' }}>
+            Son Güncelleme: {lastUpdated.toLocaleString()}
+          </h4>
+        )}
 
         <h2>📦 Stok Takip</h2>
         <ProductForm onAdd={addProduct} />
