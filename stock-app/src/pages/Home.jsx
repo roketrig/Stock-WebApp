@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
-import { collection, query, onSnapshot } from 'firebase/firestore'
+import { useAuth } from '../context/AuthContext'
+import { useState, useEffect } from 'react'
+import { 
+  collection, query, orderBy, onSnapshot, addDoc, updateDoc, deleteDoc, doc 
+} from 'firebase/firestore'
 import { db } from '../firebase'
 import ProductForm from '../components/ProductForm'
 import ProductList from '../components/ProductList'
-import { useAuth } from '../context/AuthContext'
 import './Home.css'
 
 const Home = () => {
@@ -12,70 +14,86 @@ const Home = () => {
   const [lastUpdate, setLastUpdate] = useState(null)
 
   useEffect(() => {
-    const q = query(collection(db, 'products'))
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const prods = []
+    // Ürünleri isme göre A-Z sırala
+    const q = query(collection(db, 'products'), orderBy('name'))
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }))
+      setProducts(data)
+
+      // Son güncelleme tarihini bul
       let latest = null
-
-      querySnapshot.forEach((doc) => {
-        const data = doc.data()
-        prods.push({ id: doc.id, ...data })
-
-        // updatedAt varsa ve önceki latest'ten yeni ise güncelle
-        if (data.updatedAt && (!latest || data.updatedAt.toDate() > latest.toDate())) {
-          latest = data.updatedAt
+      data.forEach(product => {
+        if (product.updatedAt) {
+          const updatedDate = product.updatedAt.toDate()
+          if (!latest || updatedDate > latest) {
+            latest = updatedDate
+          }
         }
       })
-
-      setProducts(prods)
       setLastUpdate(latest)
     })
 
     return () => unsubscribe()
   }, [])
 
-  // lastUpdate yoksa "Veri yok" göster
-  const formattedLastUpdate = lastUpdate
-    ? lastUpdate.toDate().toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' })
-    : 'Veri yok'
-
+  // Ürün ekle
   const addProduct = async (product) => {
     try {
-      // Firebase ekleme işlemi
+      await addDoc(collection(db, 'products'), {
+        name: product.name,
+        quantity: product.quantity,
+        updatedAt: new Date()
+      })
     } catch (error) {
-      console.error("Ürün eklenirken hata:", error)
+      console.error('Ürün eklenemedi:', error)
     }
   }
 
+  // Ürün sil
   const removeProduct = async (id) => {
     try {
-      // Firebase silme işlemi
+      await deleteDoc(doc(db, 'products', id))
     } catch (error) {
-      console.error("Ürün silinirken hata:", error)
+      console.error('Ürün silinemedi:', error)
     }
   }
 
+  // Ürün güncelle
   const updateProduct = async (id, newName, newQty) => {
     try {
-      // Firebase güncelleme işlemi
+      const productRef = doc(db, 'products', id)
+      await updateDoc(productRef, {
+        name: newName,
+        quantity: newQty,
+        updatedAt: new Date()
+      })
     } catch (error) {
-      console.error("Ürün güncellenirken hata:", error)
+      console.error('Ürün güncellenemedi:', error)
     }
   }
+
+  // Son güncelleme tarihini stringe çevir
+  const formattedLastUpdate = lastUpdate
+    ? lastUpdate.toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' })
+    : 'Veri yok'
 
   return (
     <div className="home-wrapper">
       <div className="home-box">
         <h1>Hoş geldin, {user.username}</h1>
-
         <p><strong>Son güncelleme: </strong>{formattedLastUpdate}</p>
-
         <button className="logout-btn" onClick={logout}>Çıkış Yap</button>
 
         <h2>📦 Stok Takip</h2>
-
         <ProductForm onAdd={addProduct} />
-        <ProductList products={products} onRemove={removeProduct} onUpdate={updateProduct} />
+        <ProductList 
+          products={products} 
+          onRemove={removeProduct} 
+          onUpdate={updateProduct} 
+        />
       </div>
     </div>
   )
