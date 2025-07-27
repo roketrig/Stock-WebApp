@@ -12,7 +12,7 @@ const ProductList = ({ products, onRemove, onUpdate }) => {
   }
 
   const handleSave = () => {
-    onUpdate(editingId, editedName, editedQty)
+    onUpdate(editingId, editedName, parseFloat(editedQty))
     setEditingId(null)
   }
 
@@ -21,29 +21,32 @@ const ProductList = ({ products, onRemove, onUpdate }) => {
       {products.map((product) => (
         <li key={product.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           {editingId === product.id ? (
-            <div style={{ flex: 1, display: 'flex', gap: '0.5rem' }}>
+            <div style={{ width: '100%', display: 'flex', gap: '10px' }}>
               <input
-                style={{ flex: 2 }}
                 value={editedName}
                 onChange={(e) => setEditedName(e.target.value)}
                 placeholder="Yeni isim"
+                style={{ flex: 2, padding: '6px' }}
               />
               <input
-                style={{ flex: 1 }}
                 type="number"
-                step="0.1"
                 value={editedQty}
                 onChange={(e) => setEditedQty(e.target.value)}
                 placeholder="Yeni adet"
+                style={{ flex: 1, padding: '6px' }}
               />
               <button onClick={handleSave}>Kaydet</button>
               <button onClick={() => setEditingId(null)}>İptal</button>
             </div>
           ) : (
             <>
-              <span style={{ flex: 2 }}>{product.name}</span>
-              <span style={{ flex: 1, textAlign: 'right' }}>{product.quantity} adet</span>
-              <div style={{ marginLeft: '1rem' }}>
+              <div style={{ flex: 2, backgroundColor: '#0077cc', color: 'white', padding: '6px 12px', borderRadius: '6px' }}>
+                {product.name}
+              </div>
+              <div style={{ flex: 1, backgroundColor: '#ff6600', color: 'white', padding: '6px 12px', borderRadius: '6px', textAlign: 'center', marginLeft: '10px' }}>
+                {product.quantity}
+              </div>
+              <div style={{ marginLeft: '10px' }}>
                 <button onClick={() => handleEditClick(product)}>Düzenle</button>
                 <button onClick={() => onRemove(product.id)}>Sil</button>
               </div>

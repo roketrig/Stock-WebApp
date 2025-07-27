@@ -65,8 +65,10 @@ const Home = () => {
     }
   }
 
-  // Toplam adet hesapla
-  const totalQuantity = products.reduce((acc, p) => acc + (parseFloat(p.quantity) || 0), 0)
+const totalQuantity = products.reduce(
+  (acc, p) => acc + Math.ceil(parseFloat(p.quantity) || 0),
+  0
+)
 
   // Son güncelleme tarihi (en büyük updatedAt)
   const lastUpdated = products.reduce((latest, p) => {
