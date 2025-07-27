@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-const ProductList = ({ products, onRemove, onUpdate }) => {
+const ProductList = ({ products, onRemove, onUpdate, lastUpdate }) => {
   const [editingId, setEditingId] = useState(null)
   const [editedName, setEditedName] = useState('')
   const [editedQty, setEditedQty] = useState('')
@@ -14,6 +14,12 @@ const ProductList = ({ products, onRemove, onUpdate }) => {
   const handleSave = () => {
     onUpdate(editingId, editedName, parseInt(editedQty))
     setEditingId(null)
+  }
+
+  // Helper: Bir ürün en son mu güncellenmiş kontrolü
+  const isLatest = (product) => {
+    if (!product.updatedAt || !lastUpdate) return false
+    return product.updatedAt.seconds === lastUpdate.seconds && product.updatedAt.nanoseconds === lastUpdate.nanoseconds
   }
 
   return (
@@ -54,9 +60,15 @@ const ProductList = ({ products, onRemove, onUpdate }) => {
                 backgroundColor: '#e0f7fa',
                 padding: '8px',
                 borderRadius: '6px',
-                fontWeight: '600'
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
               }}>
                 {product.name}
+                {isLatest(product) && (
+                  <span title="Son değişiklik" style={{ color: 'green', fontWeight: 'bold' }}>🔄</span>
+                )}
               </div>
               <div style={{
                 width: '60px',
