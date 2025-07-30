@@ -8,6 +8,9 @@ import ProductForm from '../components/ProductForm'
 import ProductList from '../components/ProductList'
 import './Home.css'
 
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
+
 const Home = () => {
   const { user, logout } = useAuth()
   const [products, setProducts] = useState([])
@@ -15,19 +18,16 @@ const Home = () => {
   const [lastUpdatedBy, setLastUpdatedBy] = useState(null)
 
   useEffect(() => {
-    const q = query(collection(db, 'products')) // orderBy('name') kaldırıldı
+    const q = query(collection(db, 'products'))
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }))
 
-      // Türkçe karakter duyarlı sıralama (A-Z)
       data.sort((a, b) => a.name.localeCompare(b.name, 'tr'))
-
       setProducts(data)
 
-      // En son güncelleme yapan kullanıcı ve zaman
       const updatedEntries = data
         .map(p => ({
           time: p.updatedAt?.toDate?.() || null,
@@ -54,7 +54,7 @@ const Home = () => {
         name: product.name,
         quantity: parseFloat(product.quantity),
         updatedAt: new Date(),
-        updatedBy: user.username // Güncelleyen kullanıcı
+        updatedBy: user.username
       })
     } catch (error) {
       console.error('Ürün eklenemedi:', error)
@@ -76,14 +76,34 @@ const Home = () => {
         name: newName,
         quantity: parseFloat(newQty),
         updatedAt: new Date(),
-        updatedBy: user.username // Güncelleyen kullanıcı
+        updatedBy: user.username
       })
     } catch (error) {
       console.error('Ürün güncellenemedi:', error)
     }
   }
 
-  // Toplam adet (0.5 ve üzeri yukarı yuvarlanır)
+  const exportToPDF = () => {
+    const filtered = products.filter(p => parseFloat(p.quantity) > 0)
+    const doc = new jsPDF()
+    doc.text('Stok Listesi', 14, 16)
+
+    const tableData = filtered.map(p => [
+      p.name,
+      p.quantity.toString(),
+      p.updatedBy || 'Bilinmiyor',
+      p.updatedAt?.toDate?.().toLocaleString() || 'Yok'
+    ])
+
+    autoTable(doc, {
+      head: [['Ürün Adı', 'Adet', 'Güncelleyen', 'Güncelleme Zamanı']],
+      body: tableData,
+      startY: 20,
+    })
+
+    doc.save('stok_listesi.pdf')
+  }
+
   const totalQuantity = products.reduce(
     (acc, p) => acc + Math.ceil(parseFloat(p.quantity) || 0),
     0
@@ -102,6 +122,10 @@ const Home = () => {
             Güncelleyen: {lastUpdatedBy}
           </p>
         )}
+
+        <button onClick={exportToPDF} style={{ marginTop: '10px' }}>
+          PDF Olarak Dışa Aktar
+        </button>
 
         <h2>📦 Stok Takip</h2>
         <ProductForm onAdd={addProduct} />
